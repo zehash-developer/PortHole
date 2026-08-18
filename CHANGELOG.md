@@ -5,6 +5,19 @@ All notable changes to PortHole are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-08-18
+
+### Added
+- **App icon** — a ship's porthole with a terminal `>_` prompt through the glass.
+  Used for the Finder app and macOS notifications, so alerts no longer show a
+  generic icon.
+- `tools/GenerateIcon.swift` + `tools/make-icon.sh` regenerate the `.icns`
+  entirely in code (no design tools needed).
+
+### Changed
+- Menu-bar glyph is now a monochrome porthole that stays crisp and adapts to
+  light/dark, replacing the server-rack symbol.
+
 ## [1.2.0] - 2026-08-18
 
 ### Added
@@ -44,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (default `~/Documents`, configurable), hiding Docker, editors, and system noise.
 - Native frosted menu-bar UI, light/dark aware, with "Open at login".
 
+[1.3.0]: https://github.com/zehash-developer/PortHole/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/zehash-developer/PortHole/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/zehash-developer/PortHole/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/zehash-developer/PortHole/releases/tag/v1.0.0
