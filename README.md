@@ -14,6 +14,7 @@ No more `lsof -i :3000` to remember what's on which port.
 - **One-click actions** — copy `http://localhost:<port>`, open in the browser, or open the folder in your terminal.
 - **Stop a server** right from the menu bar.
 - **Bookmark & restart** — star a project so it stays in the list when stopped, then hit ▶ to relaunch it (command auto-detected from `package.json`, editable).
+- **Live notifications** — a banner and sound the moment a server goes live, whether you started it in a terminal or with the ▶ button.
 - **Native feel** — frosted menu-bar popover, light/dark aware, "Open at login".
 
 ## Requirements

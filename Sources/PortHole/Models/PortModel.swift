@@ -22,6 +22,11 @@ final class PortModel: ObservableObject {
     private var scanTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
+    /// Project keys seen running in the previous scan, used to detect new servers.
+    private var runningProjectKeys: Set<String> = []
+    /// The first scan just records what's already running (no notifications for it).
+    private var didEstablishBaseline = false
+
     private let scanInterval: TimeInterval = 5
     /// How long to keep showing a spinner for a project that was asked to start.
     private let startTimeout: TimeInterval = 9
@@ -66,8 +71,27 @@ final class PortModel: ObservableObject {
                 self.entries = result
                 // Anything now listening is no longer "starting".
                 for directory in result.map(\.directory) { self.starting.remove(directory) }
+                self.notifyNewlyLiveServers(in: result)
                 self.isScanning = false
             }
+        }
+    }
+
+    /// Notifies for each project that started listening since the previous scan.
+    /// The first scan only records a baseline so existing servers stay quiet.
+    private func notifyNewlyLiveServers(in result: [PortEntry]) {
+        let byProject = Dictionary(grouping: result) { entry in
+            entry.directory.isEmpty ? "port:\(entry.port)" : entry.directory
+        }
+        let currentKeys = Set(byProject.keys)
+        defer { runningProjectKeys = currentKeys }
+
+        guard didEstablishBaseline else { didEstablishBaseline = true; return }
+        guard settings.notifyOnLive else { return }
+
+        for key in currentKeys.subtracting(runningProjectKeys) {
+            guard let entry = byProject[key]?.min(by: { $0.port < $1.port }) else { continue }
+            Notifier.serverWentLive(name: entry.projectName, port: entry.port, tool: entry.tool)
         }
     }
 

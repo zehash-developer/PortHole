@@ -16,6 +16,8 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     locationToggle
                     Divider().opacity(0.5)
+                    notifyToggle
+                    Divider().opacity(0.5)
                     terminalSection
                     if settings.filterByLocation {
                         Divider().opacity(0.5)
@@ -50,6 +52,18 @@ struct SettingsView: View {
                 Text("Only show servers in my folders")
                     .font(.system(size: 13, weight: .medium))
                 Text("Hides Docker, editors, and system services.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+        }
+        .toggleStyle(.switch)
+    }
+
+    private var notifyToggle: some View {
+        Toggle(isOn: $settings.notifyOnLive) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Notify when a server goes live")
+                    .font(.system(size: 13, weight: .medium))
+                Text("A sound + banner as each new server starts listening.")
                     .font(.system(size: 11)).foregroundStyle(.secondary)
             }
         }

@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UserNotifications
 
 /// Menu-bar-only app. The icon shows a live count of running servers; clicking
 /// it opens the popover (`ContentView`).
@@ -21,15 +22,29 @@ struct PortHoleApp: App {
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Menu-bar only: no Dock icon, no main window.
         NSApp.setActivationPolicy(.accessory)
 
-        // Dev-only: render light/dark preview images, then quit.
+        // Dev-only: render light/dark preview images, then quit. Returns before
+        // any notification setup so the bare render binary never touches it.
         let arguments = CommandLine.arguments
         if let flag = arguments.firstIndex(of: "--render-previews"), flag + 1 < arguments.count {
             PreviewRenderer.renderBothSchemes(to: arguments[flag + 1])
+            return
         }
+
+        UNUserNotificationCenter.current().delegate = self
+        Notifier.requestAuthorization()
+    }
+
+    /// Show the banner + play the sound even while PortHole is the active app.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
     }
 }

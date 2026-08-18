@@ -20,18 +20,25 @@ final class Settings: ObservableObject {
         didSet { defaults.set(terminalApp, forKey: Keys.terminalApp) }
     }
 
+    /// When true, post a notification (with sound) as each server goes live.
+    @Published var notifyOnLive: Bool {
+        didSet { defaults.set(notifyOnLive, forKey: Keys.notifyOnLive) }
+    }
+
     private let defaults = UserDefaults.standard
 
     private enum Keys {
         static let filterByLocation = "filterByLocation"
         static let roots = "roots"
         static let terminalApp = "terminalApp"
+        static let notifyOnLive = "notifyOnLive"
     }
 
     init() {
         filterByLocation = defaults.object(forKey: Keys.filterByLocation) as? Bool ?? true
         roots = defaults.stringArray(forKey: Keys.roots) ?? [Self.defaultRoot]
         terminalApp = defaults.string(forKey: Keys.terminalApp) ?? "Terminal"
+        notifyOnLive = defaults.object(forKey: Keys.notifyOnLive) as? Bool ?? true
     }
 
     func addRoot(_ path: String) {
