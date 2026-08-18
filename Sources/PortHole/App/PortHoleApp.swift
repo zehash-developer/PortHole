@@ -13,7 +13,8 @@ struct PortHoleApp: App {
         MenuBarExtra {
             ContentView(model: model)
         } label: {
-            Image(systemName: "point.3.connected.trianglepath.dotted")
+            // Server-rack glyph with a live count of running servers.
+            Image(systemName: "server.rack")
             if !model.entries.isEmpty {
                 Text("\(model.entries.count)")
             }

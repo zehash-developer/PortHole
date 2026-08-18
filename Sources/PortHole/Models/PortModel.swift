@@ -15,6 +15,8 @@ final class PortModel: ObservableObject {
     @Published var isScanning = false
     /// Directories that were just asked to start and aren't listening yet.
     @Published private(set) var starting: Set<String> = []
+    /// Directories whose most recent start attempt never came up.
+    @Published private(set) var failedToStart: Set<String> = []
 
     let settings = Settings()
     let bookmarks = BookmarkStore()
@@ -69,8 +71,11 @@ final class PortModel: ObservableObject {
             let result = PortScanner.scan(roots: roots, restrictToRoots: restrict)
             await MainActor.run {
                 self.entries = result
-                // Anything now listening is no longer "starting".
-                for directory in result.map(\.directory) { self.starting.remove(directory) }
+                // Anything now listening is no longer "starting" or "failed".
+                for directory in result.map(\.directory) {
+                    self.starting.remove(directory)
+                    self.failedToStart.remove(directory)
+                }
                 self.notifyNewlyLiveServers(in: result)
                 self.isScanning = false
             }
@@ -109,31 +114,66 @@ final class PortModel: ObservableObject {
 
     /// Launch a stopped bookmark's server and poll until it appears.
     func start(_ item: DisplayItem) {
-        guard let bookmark = bookmarks.bookmark(for: item.directory),
-              !bookmark.command.isEmpty else { return }
+        guard let bookmark = bookmarks.bookmark(for: item.directory) else { return }
+        launchAndPoll(directory: bookmark.directory, command: bookmark.command)
+    }
 
-        starting.insert(item.directory)
-        Launcher.start(directory: bookmark.directory, command: bookmark.command)
-
-        for delay in [1.5, 3.0, 5.0, 8.0] {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in self?.refresh() }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + startTimeout) { [weak self] in
-            self?.starting.remove(item.directory)
+    /// Stop a running server, then start it again from its bookmark command.
+    func restart(_ item: DisplayItem) {
+        guard let pid = item.pid,
+              let bookmark = bookmarks.bookmark(for: item.directory) else { return }
+        PortScanner.terminate(pid: pid)
+        entries.removeAll { $0.pid == pid }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            self?.launchAndPoll(directory: bookmark.directory, command: bookmark.command)
         }
     }
 
-    /// Stop a running server (SIGTERM), then reconcile.
-    func stop(_ item: DisplayItem) {
+    /// Stop a running server. SIGTERM by default, SIGKILL when `force` is true.
+    func stop(_ item: DisplayItem, force: Bool = false) {
         guard let pid = item.pid else { return }
-        PortScanner.terminate(pid: pid)
+        PortScanner.terminate(pid: pid, force: force)
         entries.removeAll { $0.pid == pid }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.refresh() }
     }
 
     /// Open a project's folder in the configured terminal app.
     func openInTerminal(_ directory: String) {
-        Launcher.openTerminal(directory: directory, app: settings.terminalApp)
+        Launcher.open(directory: directory, inApp: settings.terminalApp)
+    }
+
+    /// Open a project's folder in the configured editor app.
+    func openInEditor(_ directory: String) {
+        Launcher.open(directory: directory, inApp: settings.editorApp)
+    }
+
+    /// Open a started project's log file (for diagnosing a failed start).
+    func openLog(_ directory: String) {
+        Launcher.openLog(for: directory)
+    }
+
+    func hasLog(_ directory: String) -> Bool {
+        Launcher.logExists(for: directory)
+    }
+
+    /// Starts `command` in `directory`, then polls; if it never comes up within
+    /// the timeout, marks the project as failed to start.
+    private func launchAndPoll(directory: String, command: String) {
+        guard !directory.isEmpty, !command.isEmpty else { return }
+        failedToStart.remove(directory)
+        starting.insert(directory)
+        Launcher.start(directory: directory, command: command)
+
+        for delay in [1.5, 3.0, 5.0, 8.0] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in self?.refresh() }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + startTimeout) { [weak self] in
+            guard let self else { return }
+            self.starting.remove(directory)
+            if !self.entries.contains(where: { $0.directory == directory }) {
+                self.failedToStart.insert(directory)
+            }
+        }
     }
 
     // MARK: - Building display items
@@ -146,7 +186,7 @@ final class PortModel: ObservableObject {
                             directory: entry.directory, tool: entry.tool,
                             port: entry.port, pid: entry.pid, command: entry.command,
                             isBookmarked: bookmarks.isBookmarked(entry.directory),
-                            state: .running)
+                            state: .running, failed: false)
             }
     }
 
@@ -160,7 +200,8 @@ final class PortModel: ObservableObject {
                             directory: bookmark.directory, tool: bookmark.tool,
                             port: bookmark.port, pid: nil, command: bookmark.command,
                             isBookmarked: true,
-                            state: starting.contains(bookmark.directory) ? .starting : .stopped)
+                            state: starting.contains(bookmark.directory) ? .starting : .stopped,
+                            failed: failedToStart.contains(bookmark.directory))
             }
     }
 }

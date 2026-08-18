@@ -17,6 +17,8 @@ struct DisplayItem: Identifiable, Hashable {
     let command: String
     let isBookmarked: Bool
     let state: RunState
+    /// A stopped bookmark whose last start attempt never came up.
+    let failed: Bool
 
     var url: String { "http://localhost:\(port)" }
     var displayDirectory: String { Paths.homeRelative(directory) }

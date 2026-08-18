@@ -5,6 +5,23 @@ All notable changes to PortHole are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-08-18
+
+### Added
+- **Restart** a running server in one step (stop + start from its bookmark command).
+- **Open in Editor** — open a project folder in VS Code, Cursor, or any editor
+  (configurable in Settings, alongside the terminal app).
+- **Force Stop** (SIGKILL) for servers that ignore a graceful stop.
+- **Failed-to-start state** with **View Log** — if a started server never comes
+  up, the row flags it and you can open its output log to see why.
+
+### Changed
+- **Consolidated every row action into a single ⋯ menu**, decluttering the list:
+  each server now shows just its port, name, and one actions menu (open, copy,
+  terminal, editor, restart, stop, force stop, bookmark).
+- Bookmarked projects show a small ⭐ indicator inline with the name.
+- New server-rack menu-bar icon.
+
 ## [1.1.0] - 2026-08-18
 
 ### Added
@@ -27,5 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (default `~/Documents`, configurable), hiding Docker, editors, and system noise.
 - Native frosted menu-bar UI, light/dark aware, with "Open at login".
 
+[1.2.0]: https://github.com/zehash-developer/PortHole/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/zehash-developer/PortHole/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/zehash-developer/PortHole/releases/tag/v1.0.0

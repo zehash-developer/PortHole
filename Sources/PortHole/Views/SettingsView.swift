@@ -71,15 +71,23 @@ struct SettingsView: View {
     }
 
     private var terminalSection: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 8) {
             sectionLabel("OPEN FOLDER IN")
             HStack(spacing: 8) {
                 Image(systemName: "terminal").font(.system(size: 12)).foregroundStyle(.tint)
+                    .frame(width: 16)
                 TextField("Terminal", text: $settings.terminalApp)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: 12))
             }
-            Text("App name, e.g. Terminal, iTerm, Warp, Ghostty.")
+            HStack(spacing: 8) {
+                Image(systemName: "chevron.left.forwardslash.chevron.right")
+                    .font(.system(size: 11)).foregroundStyle(.tint).frame(width: 16)
+                TextField("Visual Studio Code", text: $settings.editorApp)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 12))
+            }
+            Text("App names, e.g. Terminal / iTerm and Visual Studio Code / Cursor.")
                 .font(.system(size: 10)).foregroundStyle(.tertiary)
         }
     }

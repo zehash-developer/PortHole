@@ -20,6 +20,11 @@ final class Settings: ObservableObject {
         didSet { defaults.set(terminalApp, forKey: Keys.terminalApp) }
     }
 
+    /// Editor app to open project folders in (e.g. "Visual Studio Code", "Cursor").
+    @Published var editorApp: String {
+        didSet { defaults.set(editorApp, forKey: Keys.editorApp) }
+    }
+
     /// When true, post a notification (with sound) as each server goes live.
     @Published var notifyOnLive: Bool {
         didSet { defaults.set(notifyOnLive, forKey: Keys.notifyOnLive) }
@@ -31,6 +36,7 @@ final class Settings: ObservableObject {
         static let filterByLocation = "filterByLocation"
         static let roots = "roots"
         static let terminalApp = "terminalApp"
+        static let editorApp = "editorApp"
         static let notifyOnLive = "notifyOnLive"
     }
 
@@ -38,6 +44,7 @@ final class Settings: ObservableObject {
         filterByLocation = defaults.object(forKey: Keys.filterByLocation) as? Bool ?? true
         roots = defaults.stringArray(forKey: Keys.roots) ?? [Self.defaultRoot]
         terminalApp = defaults.string(forKey: Keys.terminalApp) ?? "Terminal"
+        editorApp = defaults.string(forKey: Keys.editorApp) ?? "Visual Studio Code"
         notifyOnLive = defaults.object(forKey: Keys.notifyOnLive) as? Bool ?? true
     }
 

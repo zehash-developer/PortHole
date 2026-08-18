@@ -1,23 +1,21 @@
 import SwiftUI
 import AppKit
 
-/// A single row: bookmark star, port badge, project details, and state-specific
-/// actions (open / terminal / copy / stop when running; terminal / start when stopped).
+/// A single server / bookmark row. The port badge and project details sit on the
+/// left; every action lives in one ⋯ menu on the right, so the row stays clean.
 struct PortRow: View {
     @ObservedObject var model: PortModel
     let item: DisplayItem
 
-    @State private var copied = false
     @State private var hovering = false
 
     var body: some View {
         HStack(spacing: 9) {
-            bookmarkStar
             portBadge
             details
-            HStack(spacing: 2) { actions }
+            actionsMenu
         }
-        .opacity(item.state == .stopped ? 0.7 : 1)
+        .opacity(item.state == .stopped ? 0.75 : 1)
         .padding(.horizontal, 8)
         .padding(.vertical, 7)
         .background(
@@ -28,19 +26,7 @@ struct PortRow: View {
         .onHover { hovering = $0 }
     }
 
-    // MARK: - Pieces
-
-    private var bookmarkStar: some View {
-        Button(action: { model.toggleBookmark(item) }) {
-            Image(systemName: item.isBookmarked ? "star.fill" : "star")
-                .font(.system(size: 12))
-                .foregroundStyle(item.isBookmarked ? Color.yellow : Color.secondary.opacity(0.45))
-                .frame(width: 18, height: 24)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(item.isBookmarked ? "Remove bookmark" : "Bookmark — keep in the list when stopped")
-    }
+    // MARK: - Left: badge + details
 
     @ViewBuilder private var portBadge: some View {
         Group {
@@ -66,7 +52,12 @@ struct PortRow: View {
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
+                if item.isBookmarked {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.yellow)
+                }
                 Text(item.name)
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
@@ -81,7 +72,7 @@ struct PortRow: View {
                 .truncationMode(.middle)
             Text(metaLine)
                 .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(item.failed ? Color.red.opacity(0.9) : Color.secondary.opacity(0.7))
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
@@ -98,8 +89,9 @@ struct PortRow: View {
             .fixedSize()
     }
 
-    /// The dim third line: pid when running, launch command when stopped.
+    /// The dim third line, contextual to state.
     private var metaLine: String {
+        if item.failed { return "Failed to start — View Log" }
         switch item.state {
         case .running:  return "\(item.command) · pid \(item.pid ?? 0)"
         case .starting: return "starting…"
@@ -107,32 +99,74 @@ struct PortRow: View {
         }
     }
 
-    @ViewBuilder private var actions: some View {
-        switch item.state {
-        case .running:
-            IconButton(systemName: "arrow.up.forward",
-                       help: "Open \(item.url)", action: openInBrowser)
-            terminalButton
-            IconButton(systemName: copied ? "checkmark" : "doc.on.doc",
-                       tint: copied ? .green : .secondary,
-                       help: "Copy \(item.url)", action: copyURL)
-            CloseButton(help: "Stop this process (SIGTERM)") { model.stop(item) }
+    // MARK: - Right: one actions menu
 
-        case .starting:
-            terminalButton
+    private var actionsMenu: some View {
+        Menu {
+            switch item.state {
+            case .running:  runningActions
+            case .starting: startingActions
+            case .stopped:  stoppedActions
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 26, height: 26)
+                .contentShape(Circle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Actions")
+    }
 
-        case .stopped:
-            terminalButton
-            PlayButton(help: "Start \(item.command)") { model.start(item) }
+    @ViewBuilder private var runningActions: some View {
+        Button { openInBrowser() } label: { Label("Open in Browser", systemImage: "arrow.up.forward.app") }
+        Button { copyURL() } label: { Label("Copy URL", systemImage: "doc.on.doc") }
+        folderActions
+        Divider()
+        if item.isBookmarked {
+            Button { model.restart(item) } label: { Label("Restart", systemImage: "arrow.clockwise") }
+        }
+        bookmarkToggle
+        Divider()
+        Button(role: .destructive) { model.stop(item) } label: { Label("Stop", systemImage: "stop.circle") }
+        Button(role: .destructive) { model.stop(item, force: true) } label: { Label("Force Stop", systemImage: "bolt.circle") }
+    }
+
+    @ViewBuilder private var stoppedActions: some View {
+        Button { model.start(item) } label: { Label("Start", systemImage: "play.fill") }
+        folderActions
+        logAction
+        Divider()
+        Button(role: .destructive) { model.toggleBookmark(item) } label: {
+            Label("Remove Bookmark", systemImage: "star.slash")
         }
     }
 
-    @ViewBuilder private var terminalButton: some View {
+    @ViewBuilder private var startingActions: some View {
+        folderActions
+        logAction
+    }
+
+    @ViewBuilder private var folderActions: some View {
         if !item.directory.isEmpty {
-            IconButton(systemName: "terminal",
-                       help: "Open \(item.displayDirectory) in terminal") {
-                model.openInTerminal(item.directory)
-            }
+            Button { model.openInTerminal(item.directory) } label: { Label("Open in Terminal", systemImage: "terminal") }
+            Button { model.openInEditor(item.directory) } label: { Label("Open in Editor", systemImage: "chevron.left.forwardslash.chevron.right") }
+        }
+    }
+
+    @ViewBuilder private var logAction: some View {
+        if model.hasLog(item.directory) {
+            Button { model.openLog(item.directory) } label: { Label("View Log", systemImage: "doc.text") }
+        }
+    }
+
+    @ViewBuilder private var bookmarkToggle: some View {
+        Button { model.toggleBookmark(item) } label: {
+            Label(item.isBookmarked ? "Remove Bookmark" : "Bookmark",
+                  systemImage: item.isBookmarked ? "star.slash" : "star")
         }
     }
 
@@ -145,7 +179,5 @@ struct PortRow: View {
     private func copyURL() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(item.url, forType: .string)
-        copied = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { copied = false }
     }
 }

@@ -25,9 +25,10 @@ enum PortScanner {
         return entries.sorted { $0.port < $1.port }
     }
 
-    /// SIGTERM a process (same-user; no privileges required).
-    static func terminate(pid: Int32) {
-        _ = Darwin.kill(pid, SIGTERM)
+    /// Stop a process (same-user; no privileges required). Sends SIGTERM for a
+    /// graceful stop, or SIGKILL when `force` is true.
+    static func terminate(pid: Int32, force: Bool = false) {
+        _ = Darwin.kill(pid, force ? SIGKILL : SIGTERM)
     }
 
     // MARK: - Steps

@@ -16,11 +16,24 @@ enum Launcher {
         Shell.launchDetached(shellCommand: shellCommand)
     }
 
-    /// Opens `directory` in the given terminal app (falls back to "Terminal").
-    static func openTerminal(directory: String, app: String) {
+    /// Opens `directory` in the named app (e.g. a terminal or editor).
+    static func open(directory: String, inApp app: String) {
         guard !directory.isEmpty else { return }
         let name = app.trimmingCharacters(in: .whitespaces)
-        Shell.capture("/usr/bin/open", ["-a", name.isEmpty ? "Terminal" : name, directory])
+        guard !name.isEmpty else { return }
+        Shell.capture("/usr/bin/open", ["-a", name, directory])
+    }
+
+    /// Opens the project's log file in the default viewer, if it exists.
+    static func openLog(for directory: String) {
+        let path = logPath(for: directory)
+        guard FileManager.default.fileExists(atPath: path) else { return }
+        Shell.capture("/usr/bin/open", [path])
+    }
+
+    /// Whether a log file exists for this project (i.e. it was started here).
+    static func logExists(for directory: String) -> Bool {
+        FileManager.default.fileExists(atPath: logPath(for: directory))
     }
 
     /// Log file a started project writes its output to.
