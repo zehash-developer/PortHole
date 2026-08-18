@@ -27,3 +27,6 @@ Icon?
 
 # Logs
 *.log
+
+# Stray preview renders (kept as docs/screenshot-*.png)
+docs/preview-*.png
