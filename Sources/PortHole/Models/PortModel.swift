@@ -17,6 +17,8 @@ final class PortModel: ObservableObject {
     @Published private(set) var starting: Set<String> = []
     /// Directories whose most recent start attempt never came up.
     @Published private(set) var failedToStart: Set<String> = []
+    /// HTTP reachability per running port (true = responding), for the status dot.
+    @Published private(set) var reachable: [Int: Bool] = [:]
 
     let settings = Settings()
     let bookmarks = BookmarkStore()
@@ -78,7 +80,24 @@ final class PortModel: ObservableObject {
                 }
                 self.notifyNewlyLiveServers(in: result)
                 self.isScanning = false
+                self.probeReachability(of: result)
             }
+        }
+    }
+
+    /// Probes every running server's HTTP reachability (concurrently, off-main)
+    /// and publishes the results for the status dots.
+    private func probeReachability(of entries: [PortEntry]) {
+        let ports = entries.map(\.port)
+        Task { [weak self] in
+            var results: [Int: Bool] = [:]
+            await withTaskGroup(of: (Int, Bool).self) { group in
+                for port in ports {
+                    group.addTask { (port, await Reachability.responds(port: port)) }
+                }
+                for await (port, ok) in group { results[port] = ok }
+            }
+            self?.reachable = results   // single publish; also prunes stale ports
         }
     }
 
@@ -186,7 +205,8 @@ final class PortModel: ObservableObject {
                             directory: entry.directory, tool: entry.tool,
                             port: entry.port, pid: entry.pid, command: entry.command,
                             isBookmarked: bookmarks.isBookmarked(entry.directory),
-                            state: .running, failed: false)
+                            state: .running, failed: false,
+                            responding: reachable[entry.port])
             }
     }
 
@@ -201,7 +221,8 @@ final class PortModel: ObservableObject {
                             port: bookmark.port, pid: nil, command: bookmark.command,
                             isBookmarked: true,
                             state: starting.contains(bookmark.directory) ? .starting : .stopped,
-                            failed: failedToStart.contains(bookmark.directory))
+                            failed: failedToStart.contains(bookmark.directory),
+                            responding: nil)
             }
     }
 }

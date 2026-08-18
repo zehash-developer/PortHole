@@ -11,6 +11,7 @@ struct PortRow: View {
 
     var body: some View {
         HStack(spacing: 9) {
+            statusDot
             portBadge
             details
             actionsMenu
@@ -24,6 +25,41 @@ struct PortRow: View {
         )
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
+    }
+
+    // MARK: - Status dot
+
+    private var statusDot: some View {
+        Circle()
+            .fill(statusColor)
+            .frame(width: 8, height: 8)
+            .overlay(
+                Circle().stroke(statusColor.opacity(0.35), lineWidth: 3)
+                    .opacity(item.status == .running ? 1 : 0)
+            )
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.top, 6)
+            .help(statusHelp)
+    }
+
+    private var statusColor: Color {
+        switch item.status {
+        case .running:   return .green
+        case .listening: return .orange
+        case .starting:  return .orange
+        case .failed:    return .red
+        case .stopped:   return .secondary
+        }
+    }
+
+    private var statusHelp: String {
+        switch item.status {
+        case .running:   return "Running — responding"
+        case .listening: return "Listening — not responding to HTTP yet"
+        case .starting:  return "Starting…"
+        case .failed:    return "Failed to start"
+        case .stopped:   return "Stopped"
+        }
     }
 
     // MARK: - Left: badge + details

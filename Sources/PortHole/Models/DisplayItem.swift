@@ -7,6 +7,15 @@ struct DisplayItem: Identifiable, Hashable {
 
     enum RunState: Hashable { case running, stopped, starting }
 
+    /// Health shown by the status dot.
+    enum Status: Hashable {
+        case running    // listening and responding to HTTP  → green
+        case listening  // listening but not responding yet   → amber
+        case starting   // just launched, not up yet          → amber
+        case failed     // last start attempt never came up   → red
+        case stopped    // bookmarked, not running            → grey
+    }
+
     let id: String
     let name: String
     let directory: String
@@ -19,8 +28,19 @@ struct DisplayItem: Identifiable, Hashable {
     let state: RunState
     /// A stopped bookmark whose last start attempt never came up.
     let failed: Bool
+    /// HTTP reachability for a running server: nil = not probed yet.
+    let responding: Bool?
 
     var url: String { "http://localhost:\(port)" }
     var displayDirectory: String { Paths.homeRelative(directory) }
     var isRunning: Bool { state == .running }
+
+    var status: Status {
+        if failed { return .failed }
+        switch state {
+        case .starting: return .starting
+        case .stopped:  return .stopped
+        case .running:  return responding == false ? .listening : .running
+        }
+    }
 }

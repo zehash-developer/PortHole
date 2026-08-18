@@ -15,6 +15,7 @@ No more `lsof -i :3000` to remember what's on which port.
 - **Only your stuff** — filters to servers started from your project folders (default `~/Documents`, configurable), hiding Docker, editors, and system services.
 - **One ⋯ menu per server** — every action in a single, tidy dropdown: copy `http://localhost:<port>`, open in browser, open the folder in your terminal or editor, restart, stop, or force-stop.
 - **Bookmark & restart** — star a project so it stays in the list when stopped, then start it again (command auto-detected from `package.json`, editable). Failed starts flag themselves with a **View Log** action.
+- **Status at a glance** — a colored dot per server: green (responding), amber (listening/booting), red (failed to start), grey (stopped).
 - **Live notifications** — a banner and sound the moment a server goes live, whether you started it in a terminal or with the ▶ button.
 - **Native feel** — frosted menu-bar popover, light/dark aware, "Open at login".
 
