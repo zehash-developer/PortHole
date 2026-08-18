@@ -4,6 +4,8 @@ A macOS menu-bar app that shows the dev servers you have running — which proje
 
 No more `lsof -i :3000` to remember what's on which port.
 
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Leave%20a%20tip-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/zehash)
+
 ![PortHole](docs/screenshot-dark.png)
 
 ## Features
@@ -56,6 +58,12 @@ process's command line, then maps ports back to projects using the process
 working directory. Stopping sends `SIGTERM`; starting runs the project's command
 detached in a login shell so it keeps running after PortHole quits. It needs no
 special permissions and makes no network requests.
+
+## Support
+
+PortHole is free and open source. If it saves you time, you can
+[leave a tip on Ko-fi ☕](https://ko-fi.com/zehash) — it keeps the project
+caffeinated. No pressure; a ⭐ on the repo helps too.
 
 ## License
 

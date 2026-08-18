@@ -112,6 +112,16 @@ struct ContentView: View {
 
             Spacer()
 
+            Button { Links.open(Links.kofi) } label: {
+                Label("Tips", systemImage: "cup.and.saucer.fill")
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 12))
+            .foregroundStyle(.secondary)
+            .help("Support PortHole on Ko-fi")
+
+            Text("·").foregroundStyle(.tertiary)
+
             Button("Quit") { NSApp.terminate(nil) }
                 .buttonStyle(.plain)
                 .font(.system(size: 12))

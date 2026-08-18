@@ -27,6 +27,9 @@ struct SettingsView: View {
                         Divider().opacity(0.5)
                         bookmarksSection
                     }
+
+                    Divider().opacity(0.5)
+                    supportSection
                 }
                 .padding(14)
             }
@@ -149,6 +152,19 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private var supportSection: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            sectionLabel("SUPPORT")
+            Button { Links.open(Links.kofi) } label: {
+                Label("Leave a tip on Ko-fi", systemImage: "cup.and.saucer.fill")
+                    .font(.system(size: 12))
+            }
+            .buttonStyle(.borderless)
+            Text("PortHole is free & open source. Tips keep it caffeinated ☕")
+                .font(.system(size: 10)).foregroundStyle(.tertiary)
+        }
+    }
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
